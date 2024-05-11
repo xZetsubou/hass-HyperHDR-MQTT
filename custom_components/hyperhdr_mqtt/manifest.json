@@ -1,0 +1,14 @@
+{
+  "domain": "hyperhdr_mqtt",
+  "name": "HyperHDR MQTT",
+  "codeowners": ["@xZetsubou"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.dev/xZetsubou/hass-HyperHDR-MQTT",
+  "homekit": {},
+  "iot_class": "local_push",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "version": "2024.5.0"
+}
