@@ -1,4 +1,4 @@
-![logo](https://github.com/xZetsubou/hass-HyperHDR-MQTT/assets/46300268/8c101fe4-386e-47b5-8b5e-be1697e9dbaa)
+![logo](https://github.com/xZetsubou/hass-HyperHDR-MQTT/assets/46300268/02f479c8-90c6-4612-a84f-ba2adb8f6523)
 
 
 Home Assistant integration to HyperHDR over MQTT
