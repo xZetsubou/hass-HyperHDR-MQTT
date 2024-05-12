@@ -1,0 +1,49 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured"
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error",
+      "value_error": "Error value {val_error}"
+    },
+    "step": {
+      "user": {
+        "title": "HyperHDR MQTT",
+        "data": {
+          "port": "port",
+          "topic": "HyperHDR Topic note* without /JsonAPI",
+          "host": "Host",
+          "broker": "broker",
+          "password": "Password",
+          "username": "Username",
+          "priority": "HyperHDR Priority"
+        },
+        "data_description": {
+          "topic": ""
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HyperHDR MQTT",
+        "data": {
+          "port": "port",
+          "topic": "HyperHDR Topic note* without /JsonAPI",
+          "host": "Host",
+          "broker": "broker",
+          "password": "Password",
+          "username": "Username",
+          "priority": "HyperHDR Priority"
+        },
+        "data_description": {
+          "topic": ""
+        }
+      }
+    }
+  }
+}
