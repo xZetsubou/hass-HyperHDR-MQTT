@@ -28,7 +28,7 @@ from .const import (
     FRIENDLY_NAME,
     JSON_API,
     JSON_API_RESPONSE,
-    PRIORITY,
+    CONF_PRIORITY,
     Path,
     Adjustments,
 )
@@ -78,7 +78,7 @@ class HyperHDRManger:
         self._port = int(config.get(CONF_PORT, 1883))
         self._user = config.get(CONF_USERNAME)
         self._password = config.get(CONF_PASSWORD)
-        self._priority = int(config.get(PRIORITY))
+        self._priority = int(config.get(CONF_PRIORITY))
 
         # Commands Responses.
         self._serverInfo: dict = {}
