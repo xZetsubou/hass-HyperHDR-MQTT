@@ -140,10 +140,10 @@ class HyperHDR_MQTT_Entity(Entity):
         return f"{self.device._topic}_{self._instance}_{self.name.lower()}"
 
     @property
-    def device_info(self) -> dict:
+    def device_info(self) -> DeviceInfo:
         return DeviceInfo(
             name=self.device.name,
-            model=f"Instance: {self._instance}",
+            model=f"{self.device.name}",
             manufacturer="HyperHDR",
             identifiers={(DOMAIN, f"{self.device._topic}_{self._instance}")},
         )

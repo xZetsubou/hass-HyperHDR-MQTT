@@ -13,10 +13,11 @@ from homeassistant.components.light import (
     ColorMode,
     LightEntity,
 )
+import homeassistant.util.color as color_util
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import logging
 
-from .const import DOMAIN, Components
+from .const import DOMAIN, Components, Adjustments
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,10 +33,21 @@ async def async_setup_entry(
         async_add_entities([HyperHDRLight(hass, api)])
 
 
+def map_range(value, from_lower, from_upper, to_lower=0, to_upper=255, reverse=False):
+    """Map a value in one range to another."""
+    if reverse:
+        value = from_upper - value + from_lower
+    mapped = (value - from_lower) * (to_upper - to_lower) / (
+        from_upper - from_lower
+    ) + to_lower
+    return round(min(max(mapped, to_lower), to_upper))
+
+
 class HyperHDRLight(HyperHDR_MQTT_Entity, LightEntity):
     def __init__(self, hass, device) -> None:
         super().__init__(hass, device)
         self._instance = self.device.selected_instance
+        self._attr_color_mode = ColorMode.HS
 
     @property
     def name(self):
@@ -48,11 +60,15 @@ class HyperHDRLight(HyperHDR_MQTT_Entity, LightEntity):
     @property
     def brightness(self):
         """Return the brightness of the light."""
+        if self.device.brightness is not None:
+            return map_range(self.device.brightness, 0, 100)
         return None
 
     @property
     def hs_color(self):
         """Return the hs color value."""
+        if rgb := self.device.rgb_value:
+            return color_util.color_RGB_to_hs(*rgb)
         return None
 
     @property
@@ -64,7 +80,6 @@ class HyperHDRLight(HyperHDR_MQTT_Entity, LightEntity):
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
         """Flag supported color modes."""
         color_modes: set[ColorMode] = set()
-        color_modes.add(ColorMode.COLOR_TEMP)
         color_modes.add(ColorMode.HS)
 
         if not color_modes:
@@ -82,10 +97,33 @@ class HyperHDRLight(HyperHDR_MQTT_Entity, LightEntity):
     @property
     def effect_list(self) -> list:
         """Return the list of supported effects for this light."""
-        return self.device._light_effects
+        return self.device.light_effects
+
+    @property
+    def effect(self) -> str | None:
+        """Return the current effect."""
+        return self.device.active_effect
 
     async def async_turn_on(self, **kwargs):
-        await self.device.set_component(Components.LEDDEVICE, True)
+        commands = []
+        on_payload = await self.device.set_component(Components.LEDDEVICE, True, True)
+        commands.append(on_payload)
+
+        if effect := kwargs.get(ATTR_EFFECT):
+            commands.append(await self.device.set_color_efect(effect, True))
+
+        if hs_color := kwargs.get(ATTR_HS_COLOR):
+            rgb_color = color_util.color_hs_to_RGB(*hs_color)
+            commands.append(await self.device.set_color(rgb_color, True))
+
+        if brightness := kwargs.get(ATTR_BRIGHTNESS):
+            brightness = map_range(brightness, 0, 255, 0, 100)
+            brightness_payload = await self.device.set_adjustment(
+                Adjustments.BRIGHTNESS, brightness, True
+            )
+            commands.append(brightness_payload)
+
+        await self.device.publish(commands, True)
 
     async def async_turn_off(self, **kwargs):
         await self.device.set_component(Components.LEDDEVICE, False)

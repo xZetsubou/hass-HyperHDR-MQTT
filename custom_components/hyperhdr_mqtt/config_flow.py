@@ -15,7 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
 
 from .mqtt import HyperHDRManger
-from .const import DOMAIN, CONF_TOPIC, CONF_BROKER, PRIORITY
+from .const import DOMAIN, CONF_TOPIC, CONF_BROKER, CONF_PRIORITY
 
 
 from homeassistant.const import CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_PORT
@@ -25,24 +25,11 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_TOPIC, default="HyperHDR"): str,
-        vol.Required(CONF_BROKER, default=""): str,
+        vol.Required(CONF_BROKER): str,
         vol.Required(CONF_PORT, default=1883): int,
-        vol.Required(CONF_USERNAME, default=""): str,
-        vol.Optional(CONF_PASSWORD, default=""): str,
-        vol.Required(PRIORITY, default=50): selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                min=1, max=253, mode=selector.NumberSelectorMode.BOX
-            )
-        ),
-    }
-)
-STEP_USER_DATA_SCHEMA_CONFIGURE = vol.Schema(
-    {
-        vol.Required(CONF_BROKER, default="192.168.1.250"): str,
-        vol.Required(CONF_PORT, default=1883): int,
-        vol.Required(CONF_USERNAME, default=""): str,
-        vol.Optional(CONF_PASSWORD, default=""): str,
-        vol.Required(PRIORITY, default=50): selector.NumberSelector(
+        vol.Required(CONF_USERNAME): str,
+        vol.Optional(CONF_PASSWORD): str,
+        vol.Required(CONF_PRIORITY, default=50): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1, max=253, mode=selector.NumberSelectorMode.BOX
             )
@@ -181,9 +168,30 @@ class HyperHDRMQTTOptionsFlow(config_entries.OptionsFlow):
                     title=user_input[CONF_TOPIC], data=user_input
                 )
 
+        schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_BROKER, default=self.config_entry.data[CONF_BROKER]
+                ): str,
+                vol.Required(CONF_PORT, default=self.config_entry.data[CONF_PORT]): int,
+                vol.Required(
+                    CONF_USERNAME, default=self.config_entry.data[CONF_USERNAME]
+                ): str,
+                vol.Optional(
+                    CONF_PASSWORD, default=self.config_entry.data[CONF_PASSWORD]
+                ): str,
+                vol.Required(
+                    CONF_PRIORITY, default=self.config_entry.data[CONF_PRIORITY]
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=253, mode=selector.NumberSelectorMode.BOX
+                    )
+                ),
+            }
+        )
         return self.async_show_form(
             step_id="init",
-            data_schema=STEP_USER_DATA_SCHEMA_CONFIGURE,
+            data_schema=schema,
             description_placeholders=placeholders,
             errors=errors,
         )

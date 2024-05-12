@@ -30,6 +30,7 @@ from .const import (
     JSON_API_RESPONSE,
     PRIORITY,
     Path,
+    Adjustments,
 )
 
 # from .const import(JSON_API,JSON_API_RESPONSE,PATH_INSTANCE,[Path.INFO], PATH_COMPONENTS, PATH_RUNNING)
@@ -181,7 +182,10 @@ class HyperHDRManger:
         self.connected = None
 
     async def publish(self, instance, msg: dict, wait=False) -> bool:
-        payload = [change_index(instance), msg]
+        if isinstance(msg, list):
+            payload = [change_index(instance)] + msg
+        else:
+            payload = [change_index(instance), msg]
         if self.connected:
             self._payload = None
 
@@ -194,7 +198,7 @@ class HyperHDRManger:
                         break
 
             # We will wait for any message for the next 3 seconds else we will return
-            _LOGGER.error(f"Publish this: {dumps_payload(payload)}")
+            self.debug(f"Publishing: {dumps_payload(payload)}")
             task = asyncio.create_task(publish_and_wait())
             if wait:
                 await asyncio.wait_for(task, 5)
@@ -230,7 +234,10 @@ class HyperHDRInstance:
         self._wait_for_new_states = False
         self.selected_instance: int = instance
         self.update_callback = None
-        self._light_effects = []
+        self.light_effects = []
+        self.active_effect = ""
+        self.rgb_value = ()
+        self.brightness = None
 
     def debug(self, message):
         _LOGGER.debug(f"{self._topic} Instance: {self.selected_instance}: {message}")
@@ -286,8 +293,29 @@ class HyperHDRInstance:
 
         if data and data.get(Path.INFO):
             info = data[Path.INFO]
-            if not self._light_effects:
+            if not self.light_effects:
                 self._effects(info[Path.EFFECTS])
+
+            # Update RGB Colors
+            if active_color := info.get("activeLedColor"):
+                rgb_value = tuple(c for c in active_color[0]["RGB Value"])
+                if self.rgb_value != rgb_value:
+                    self.rgb_value = rgb_value
+                    updated = True
+            # Update Brightness
+            if adjustments := info.get("adjustment"):
+                brightness = adjustments[0]["brightness"]
+                if self.brightness != brightness:
+                    self.brightness = brightness
+                    updated = True
+            # Update The effect
+            if activeeffects := info.get("activeEffects"):
+                active_effect = activeeffects[0]["name"]
+            else:
+                active_effect = None
+            if self.active_effect != active_effect:
+                self.active_effect = active_effect
+                updated = True
 
             components = {}
             for com in info[Path.COMPONENTS]:
@@ -303,11 +331,14 @@ class HyperHDRInstance:
                 self._update()
         return True
 
-    async def set_component(self, component: Components, state):
+    async def set_component(self, component: Components, state, return_payload=False):
         payload = {
             "command": "componentstate",
             "componentstate": {"component": component.value, "state": state},
         }
+        if return_payload:
+            return json.dumps(payload)
+
         await self.publish(payload, True)
 
     async def set_instance(self, state):
@@ -320,7 +351,7 @@ class HyperHDRInstance:
         self._wait_for_new_states = True
         await self.manager.publish(0, payload)
 
-    async def set_color_efect(self, effect):
+    async def set_color_efect(self, effect, return_payload=False):
         payload = {
             "command": "effect",
             "effect": {"name": effect},
@@ -328,13 +359,44 @@ class HyperHDRInstance:
             "priority": 64,
             "origin": "JSON API",
         }
+        if return_payload:
+            return json.dumps(payload)
+        await self.publish(payload, True)
 
-    async def publish(self, payload: dict, wait_for_states=False):
+    async def set_color(self, color: tuple, return_payload=False):
+        payload = {
+            "command": "color",
+            "color": color,
+            "duration": 0,
+            "priority": 64,
+            "origin": "JSON API",
+        }
+        if return_payload:
+            return json.dumps(payload)
+
+        await self.publish(payload, True)
+
+    async def set_adjustment(
+        self, adjustment: Adjustments, value, return_payload=False
+    ):
+        payload = {
+            "command": "adjustment",
+            "adjustment": {"classic_config": False, adjustment.value: value},
+        }
+        if return_payload:
+            return json.dumps(payload)
+
+        await self.publish(payload, True)
+
+    async def publish(self, payload: dict | list, wait_for_states=False):
         """Publish instance payload"""
-        await self.manager.publish(self.selected_instance, json.dumps(payload))
-
         if wait_for_states:
             self._wait_for_new_states = True
+
+        if isinstance(payload, list):
+            await self.manager.publish(self.selected_instance, payload)
+        else:
+            await self.manager.publish(self.selected_instance, json.dumps(payload))
 
     def disconnect(self):
         self.debug(f"HyperHDR MQTT Disconnected")
@@ -354,7 +416,7 @@ class HyperHDRInstance:
                 else:
                     classic_effects.append(value)
 
-        self._light_effects = classic_effects + music_effects
+        self.light_effects = classic_effects + music_effects
 
     def _states_updater(self):
         """Start the state updater to poll the states of instances"""
@@ -367,7 +429,7 @@ class HyperHDRInstance:
                     interval = STATES_UPDATE_INTERVAL
                     asyncio.create_task(self.serverInfo(True))
                     if self._wait_for_new_states:
-                        interval = 0.1
+                        interval = 0.45
                     await asyncio.sleep(interval)
                 except (Exception, asyncio.CancelledError) as ex:
                     self.debug(f"State fetch loop stopped: {ex}")

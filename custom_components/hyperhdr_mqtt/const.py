@@ -15,7 +15,7 @@ CONF_PORT = "port"
 CONF_USERNAME = "command"
 CONF_PASSWORD = "serverinfo"
 CONF_BROKER = "broker"
-PRIORITY = "priority"
+CONF_PRIORITY = "priority"
 
 
 # HyperHDR
@@ -52,3 +52,20 @@ class Path(StrEnum):
 
 class Errors(StrEnum):
     NOT_READY = "Not ready"
+
+
+class Adjustments(StrEnum):
+    WHITE = "white"
+    RED = "Red"
+    GREEN = "green"
+    BLUE = "blue"
+    CYAN = "cyan"
+    MAGENTA = "magenta"
+    YELLOW = "yellow"
+    BACKLIGHT_THRESHOLD = "backlightThreshold"
+    COLORED_BACKLIGHT = "backlightColored"
+    BRIGHTNESS = "brightness"
+    BRIGHTNESS_COMPENSATION = "brightnessCompensation"
+    GAMMA_RED = "gammaRed"
+    GAMMA_GREEN = "gammaGreen"
+    GAMMA_BLUE = "gammaBlue"
