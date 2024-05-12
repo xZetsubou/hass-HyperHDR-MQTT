@@ -25,10 +25,10 @@ _LOGGER = logging.getLogger(__name__)
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_TOPIC, default="HyperHDR"): str,
-        vol.Required(CONF_BROKER, default="192.168.1.250"): str,
+        vol.Required(CONF_BROKER, default=""): str,
         vol.Required(CONF_PORT, default=1883): int,
-        vol.Required(CONF_USERNAME, default="hass"): str,
-        vol.Optional(CONF_PASSWORD, default="1220"): str,
+        vol.Required(CONF_USERNAME, default=""): str,
+        vol.Optional(CONF_PASSWORD, default=""): str,
         vol.Required(PRIORITY, default=50): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1, max=253, mode=selector.NumberSelectorMode.BOX
@@ -40,8 +40,8 @@ STEP_USER_DATA_SCHEMA_CONFIGURE = vol.Schema(
     {
         vol.Required(CONF_BROKER, default="192.168.1.250"): str,
         vol.Required(CONF_PORT, default=1883): int,
-        vol.Required(CONF_USERNAME, default="hass"): str,
-        vol.Optional(CONF_PASSWORD, default="1220"): str,
+        vol.Required(CONF_USERNAME, default=""): str,
+        vol.Optional(CONF_PASSWORD, default=""): str,
         vol.Required(PRIORITY, default=50): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1, max=253, mode=selector.NumberSelectorMode.BOX
