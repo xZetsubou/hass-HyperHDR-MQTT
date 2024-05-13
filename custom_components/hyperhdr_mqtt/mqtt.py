@@ -227,6 +227,7 @@ class HyperHDRInstance:
         # Mqtt preapre configs.
         self._topic = config.get(CONF_TOPIC)
         self._topic_push = self._topic + "/" + JSON_API
+        self._priority = config.get(CONF_PRIORITY)
         self.manager = manager
         self.connected = False
 
@@ -336,6 +337,9 @@ class HyperHDRInstance:
             "command": "componentstate",
             "componentstate": {"component": component.value, "state": state},
         }
+        if component == Components.LEDDEVICE and state is False:
+            await self.clear_piority()
+
         if return_payload:
             return json.dumps(payload)
 
@@ -356,7 +360,7 @@ class HyperHDRInstance:
             "command": "effect",
             "effect": {"name": effect},
             "duration": 0,
-            "priority": 64,
+            "priority": self._priority,
             "origin": "JSON API",
         }
         if return_payload:
@@ -368,7 +372,7 @@ class HyperHDRInstance:
             "command": "color",
             "color": color,
             "duration": 0,
-            "priority": 64,
+            "priority": self._priority,
             "origin": "JSON API",
         }
         if return_payload:
@@ -387,6 +391,11 @@ class HyperHDRInstance:
             return json.dumps(payload)
 
         await self.publish(payload, True)
+
+    async def clear_piority(self):
+        """"""
+        payload = {"command": "clear", "priority": self._priority}
+        await self.publish(payload)
 
     async def publish(self, payload: dict | list, wait_for_states=False):
         """Publish instance payload"""
